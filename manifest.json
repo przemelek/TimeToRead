@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "TimeToRead",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Adds tags describing time needed to read to articles in Pocket",
   /*"browser_action": {
     "default_popup": "timeToRead.html",

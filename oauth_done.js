@@ -11,3 +11,4 @@ for (var i=0; i<elems.length; i++) {
   localStorage[v[0]]=v[1];
 }
 chrome.extension.getBackgroundPage().init();
+window.close();

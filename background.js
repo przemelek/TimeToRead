@@ -1,5 +1,6 @@
+// use it to "zero" since parameter, when added new tags, or other things cause that you want to perform all operations for all articles.
+var sinceKey = "since2";
 var redirect_url = window.location.href.replace("background.html","oauth.html");
-console.log(redirect_url);
 
 var oauth = new OAuth({
 	'request_url': 'https://getpocket.com/v3/oauth/request',
@@ -12,7 +13,7 @@ var oauth = new OAuth({
 // function fetch(url,method,headers,body,callback,async,returnAsXML)
 function retrieve(since) {
 	var url = "https://getpocket.com/v3/get";
-	var body = '{"consumer_key":"'+consumer_key+'","access_token":"'+oauth.getAuthToken()+'","contentType":"article"';
+	var body = '{"consumer_key":"'+consumer_key+'","access_token":"'+oauth.getAuthToken()+'","contentType":"article","sort":"oldest"';
 	if (since) {
 		body+=',"since":"'+since+'"';
 	}
@@ -35,9 +36,12 @@ function modify(articles) {
 		else if (minutesToRead<=2) { tag="2 minutes or less"; }
 		else if (minutesToRead<=5) { tag="5 minutes or less"; }
 		else if (minutesToRead<=10) { tag="10 minutes or less"; }
+		else if (minutesToRead<=15) { tag="15 minutes or less"; }
 		else if (minutesToRead<=30) { tag="30 minutes or less"; }
 		else tag = "30+ minutes";
+		var tags = ["1 minute or less","2 minutes or less","5 minutes or less","10 minutes or less","15 minutes or less","30 minutes or less","30+ minutes"].filter(function(x) { return x!=tag; });		
 		var url = "https://getpocket.com/v3/send";
+		body +=  '{"action":"tags_remove","tags":'+JSON.stringify(tags)+',"item_id":"'+itemId+'"},';
 		body +=  '{"action":"tags_add","item_id":"'+itemId+'","tags":["'+tag+'"]},';					
 	}
 	body=body.substring(0,body.length-1);
@@ -49,7 +53,7 @@ function modify(articles) {
 }
 
 function addTagsToAllNewPosts() {
-	var list = JSON.parse(retrieve(localStorage["since"]));
+	var list = JSON.parse(retrieve(localStorage[sinceKey]));
 	//console.log(list.length);
 	//console.log(list.list);
 	var count = 0;
@@ -73,20 +77,20 @@ function addTagsToAllNewPosts() {
 	}
 	// OK, may make problems...
 	var list2 = JSON.parse(retrieve(Math.floor(new Date().getTime()/1000)));
-	localStorage["since"]=list2.since;
+	localStorage[sinceKey]=list2.since;
 	console.log("count="+count);
 	//console.log("wordsCount="+wordsCount);
 	setTimeout(addTagsToAllNewPosts,5*60*1000);
 }
 
 function init() {
-	if (!oauth.isAuthorized()) {	
+	if (!oauth.isAuthorized()) {
 		oauth.authorize();
 		return;
 	}
 	console.log("authorized");
 	
-	setTimeout(addTagsToAllNewPosts,0);
+	setTimeout(addTagsToAllNewPosts,1*1000);
 }
 
 init();
