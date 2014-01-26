@@ -1,15 +1,11 @@
 {
   "manifest_version": 2,
   "name": "TimeToRead",
-  "version": "0.0.3",
+  "version": "0.0.3.1",
   "description": "Adds tags describing time needed to read to articles in Pocket",
-  /*"browser_action": {
-    "default_popup": "timeToRead.html",
-    "default_icon": "timeToRead.png"
-  },*/
   "background": {"page":"background.html"},
   "permissions": [
-    "http://*/*", "https://*/*"
+    "http://*/*", "https://*/*", "storage"
   ],
   "web_accessible_resources" : ["oauth.html","oauth.js"]
 }

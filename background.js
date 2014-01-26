@@ -91,15 +91,25 @@ function addTagsToAllNewPosts() {
 	}
 	if (needToUpdateSince && canUpdateSince) {
 		// OK, may make problems...	
-		var list2 = JSON.parse(retrieve(Math.floor(new Date().getTime()/1000)));
-		if (list2.since) {
-			localStorage[sinceKey]=list2.since;
-		}
+		updateSince();
 	}
 	
 	console.log("count="+count);
 	console.log("wordsCount="+wordsCount);
 	setTimeout(addTagsToAllNewPosts,5*60*1000);
+}
+
+function updateSince() {
+	var list2 = JSON.parse(retrieve(Math.floor(new Date().getTime()/1000)));
+	if (list2.since) {
+		if (list2.since>localStorage[sinceKey]*1) {
+			localStorage[sinceKey]=list2.since;
+			// publish since
+			var sinceObj = {};
+			sinceObj[sinceKey]=list2.since;
+			chrome.storage.sync.set(sinceObj);
+		}
+	}
 }
 
 function init() {
@@ -108,8 +118,32 @@ function init() {
 		return;
 	}
 	console.log("authorized");
-	
+	console.log(localStorage[sinceKey]);
 	setTimeout(addTagsToAllNewPosts,1*1000);
 }
 
-init();
+chrome.storage.onChanged.addListener(function (changes, namespace) {
+	if (namespace=='sync') {
+		var obj = changes[sinceKey];
+		if (obj) {
+			var sinceVal = obj.newValue;
+			if (sinceVal) {
+				var localSinceVal = localStorage[sinceKey];
+				if (localSinceVal) {
+					if (localSinceVal*1<sinceVal*1) {
+						localStorage[sinceKey]=sinceVal;
+					}
+				} else {
+					localStorage[sinceKey]=sinceVal;
+				}				
+			}
+		}
+	}
+});
+
+chrome.storage.sync.get(function(items) {
+	if (items[sinceKey]) {
+		localStorage[sinceKey]=items[sinceKey];
+	}
+	init();
+});
