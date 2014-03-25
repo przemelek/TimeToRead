@@ -20,11 +20,11 @@ function OAuth(config) {
   }
   
   this.isAuthorized = function() {
-    if (localStorage["access_token"]) return true;
+    if (localStorage["access_token4"]) return true;
 	return false;
   }
   
   this.getAuthToken = function() {
-	return localStorage["access_token"];
+	return localStorage["access_token4"];
   }
 }

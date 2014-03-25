@@ -13,7 +13,8 @@ var oauth = new OAuth({
 // function fetch(url,method,headers,body,callback,async,returnAsXML)
 function retrieve(since) {
 	var url = "https://getpocket.com/v3/get";
-	var bodyObj = {"consumer_key":consumer_key,"access_token":oauth.getAuthToken(),"contentType":"article","sort":"oldest"};	
+	var bodyObj = {"consumer_key":consumer_key,"access_token":oauth.getAuthToken(),"contentType":"article","sort":"oldest","detailType":"complete"};	
+
 	if (since) {
 		bodyObj.since=since;
 	}
@@ -33,10 +34,11 @@ function modify(articles) {
 	var bodyObj = {"consumer_key":consumer_key,"access_token":oauth.getAuthToken()};
 	bodyObj.actions=new Array();
     for (var i=0; i<articles.length; i++) {
-		var article = articles[i];
+		var article = articles[i];		
 		var minutesToRead = Math.floor(article.word_count/200);
 		var itemId = article.item_id;
 		var tag = null;
+		var currentTags = article.tags;
 		if (minutesToRead<=1) { tag="1 minute or less"; }
 		else if (minutesToRead<=2) { tag="2 minutes or less"; }
 		else if (minutesToRead<=5) { tag="5 minutes or less"; }
@@ -45,22 +47,43 @@ function modify(articles) {
 		else if (minutesToRead<=30) { tag="30 minutes or less"; }
 		else tag = "30+ minutes";
 		var tags = ["1 minute or less","2 minutes or less","5 minutes or less","10 minutes or less","15 minutes or less","30 minutes or less","30+ minutes"].filter(function(x) { return x!=tag; });		
+		var tagsToRemove = [];
+		if (currentTags) {
+			for (var tagIdx = 0; tagIdx<tags.length; tagIdx++) {
+				if (currentTags[tags[tagIdx]]) {
+					tagsToRemove.push(tags[tagIdx]);
+				}
+			}
+		}
 		var url = "https://getpocket.com/v3/send";
-		var removeTagsAction = {"action":"tags_remove","tags":JSON.stringify(tags),"item_id":itemId};
-		var addTagAction = {"action":"tags_add","tags":new Array(tag),"item_id":itemId};
-		bodyObj.actions.push(removeTagsAction);
-		bodyObj.actions.push(addTagAction);
+		var removeTagsAction = null;
+		if (tagsToRemove.length!=0) {
+			removeTagsAction = {"action":"tags_remove","tags":String(tagsToRemove),"item_id":itemId};
+		}
+		var addTagAction = null;
+		if (!currentTags || (currentTags && !currentTags[tag])) {
+			addTagAction = {"action":"tags_add","tags":tag,"item_id":itemId};
+		}
+		if (removeTagsAction!=null) {
+			bodyObj.actions.push(removeTagsAction);
+		}
+		if (addTagAction) {
+			bodyObj.actions.push(addTagAction);
+		}
 	}
-	var body = JSON.stringify(bodyObj);
-	var headers = [];
-	headers.push({"name":"Content-Type","value":"application/json; charset=UTF8"});	
-	try {
-		var response = fetch(url,"POST",headers,body,null,false,false);
-		// OK, here we should pass value calculated from response....
-		return true;
-	} catch(e) {
-		return false;
+	if (bodyObj.actions.length>0) {
+		var body = JSON.stringify(bodyObj);
+		var headers = [];
+		headers.push({"name":"Content-Type","value":"application/json; charset=UTF8"});	
+		try {
+			var response = fetch(url,"POST",headers,body,null,false,false);
+			// OK, here we should pass value calculated from response....
+			return true;
+		} catch(e) {
+			return false;
+		}
 	}
+	return true;
 }
 
 function addTagsToAllNewPosts() {
