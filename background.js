@@ -34,7 +34,8 @@ function modify(articles) {
 	var bodyObj = {"consumer_key":consumer_key,"access_token":oauth.getAuthToken()};
 	bodyObj.actions=new Array();
     for (var i=0; i<articles.length; i++) {
-		var article = articles[i];		
+		var article = articles[i];
+		if (!article.word_count) continue;
 		var minutesToRead = Math.floor(article.word_count/200);
 		var itemId = article.item_id;
 		var tag = null;
@@ -139,7 +140,20 @@ function init() {
 	if (!oauth.isAuthorized()) {
 		oauth.authorize();
 		return;
-	}
+	} else {
+	    // OK, now lets consider situation when somehow token is not valid
+        // so lets try to retrive empty result, if we will be able to do so - cool, we have proper token
+        // if not, this means that we need to authorize..
+	    var str = retrieve(new Date()*1000+1000);
+        try {
+            var obj = JSON.parse(str);
+            if (!obj || !obj.since) {
+                oauth.authorize();
+            }
+        } catch(e) {
+            oauth.authorize();
+        }
+    }
 	console.log("authorized");
 	console.log(localStorage[sinceKey]);
 	setTimeout(addTagsToAllNewPosts,1*1000);
